@@ -2,30 +2,37 @@ import { useState, useEffect, useRef } from 'react'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import gsap from 'gsap'
 import RecipeCard from './RecipeCard'
+import '../styles/ChatInterface.css'
 
-function ChatInterface({ detectedIngredients, userName }) {
+function ChatInterface({ userName, onRecipeGenerated }) {
   const [messages, setMessages] = useState([
-    { role: 'assistant', content: `Hi ${userName}! 👋 Upload an image or tell me what ingredients you have, and I'll create amazing recipes for you!` }
+    { role: 'assistant', content: `Hi ${userName}! 👋 Welcome! Tell me what ingredients you have or what recipe you'd like, and I'll generate an amazing recipe with an AI-generated image!` }
   ])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
-  const [recipe, setRecipe] = useState(null)
+  const [recipes, setRecipes] = useState([])
   const messagesEndRef = useRef(null)
+  const recipeRef = useRef(null)
   const [chat, setChat] = useState(null)
 
-  // Initialize Gemini
   useEffect(() => {
-    const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY)
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" })
-    
-    const chatInstance = model.startChat({
-      history: [],
-      generationConfig: {
-        maxOutputTokens: 1000,
-      },
-    })
-    
-    setChat(chatInstance)
+    try {
+      const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY)
+      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" })
+      
+      const chatInstance = model.startChat({
+        history: [],
+        generationConfig: {
+          maxOutputTokens: 2000,
+          temperature: 0.7,
+        },
+      })
+      
+      setChat(chatInstance)
+      console.log('✅ Gemini initialized!')
+    } catch (err) {
+      console.error('❌ Gemini error:', err)
+    }
   }, [])
 
   useEffect(() => {
@@ -43,77 +50,106 @@ function ChatInterface({ detectedIngredients, userName }) {
   }, [messages])
 
   useEffect(() => {
-    if (detectedIngredients.length > 0) {
-      setInput(`I have: ${detectedIngredients.join(', ')}. What can I cook?`)
+    if (recipes.length > 0) {
+      setTimeout(() => {
+        recipeRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+      }, 100)
     }
-  }, [detectedIngredients])
+  }, [recipes])
 
   const generateRecipe = async (userMessage) => {
     if (!chat) {
-      alert('Chat not initialized yet. Wait a moment!')
+      alert('Chat not initialized. Please wait...')
       return
     }
+
+    setMessages(prev => [
+      ...prev,
+      { role: 'user', content: userMessage }
+    ])
 
     setLoading(true)
     
     try {
-      const prompt = `You are a professional chef assistant. User says: "${userMessage}". 
-      Generate a creative recipe with these sections:
-      
-      **Recipe Name**
-      [Creative name here]
-      
-      **Ingredients:**
-      - List all ingredients with quantities
-      
-      **Instructions:**
-      1. Step-by-step cooking instructions
-      
-      **Cooking Time:** [time]
-      **Servings:** [number]
-      **Dietary Info:** [vegetarian/vegan/etc if applicable]`
+      const recipePrompt = `You are a professional chef. The user says: "${userMessage}"
 
-      const result = await chat.sendMessage(prompt)
+Generate ONE complete recipe with these EXACT sections:
+
+**Recipe Name**
+[Name]
+
+**Ingredients:**
+- [ingredient 1 with quantity]
+- [ingredient 2 with quantity]
+- [ingredient 3 with quantity]
+- [ingredient 4 with quantity]
+- [ingredient 5 with quantity]
+- [ingredient 6 with quantity]
+
+**Instructions:**
+1. [Step 1 detailed]
+2. [Step 2 detailed]
+3. [Step 3 detailed]
+4. [Step 4 detailed]
+5. [Step 5 detailed]
+
+**Cooking Time:** [X minutes]
+**Servings:** [X servings]
+**Dietary Info:** [vegan/vegetarian/gluten-free/None]
+**Difficulty:** [Easy/Medium/Hard]
+
+Generate the complete recipe NOW.`
+
+      const result = await chat.sendMessage(recipePrompt)
       const aiResponse = result.response.text()
       
-      setMessages(prev => [
-        ...prev,
-        { role: 'user', content: userMessage },
-        { role: 'assistant', content: aiResponse }
-      ])
+      console.log('✅ Recipe generated!')
+
+      // Extract recipe name
+      const nameMatch = aiResponse.match(/\*\*Recipe Name\*\*\s*\n(.+)/i)
+      const recipeName = nameMatch ? nameMatch[1].trim() : 'Delicious Recipe'
+
+      // Trigger AI image generation in parent component
+      onRecipeGenerated(recipeName)
+
+      setRecipes(prev => [...prev, aiResponse])
       
-      setRecipe(aiResponse)
-      setLoading(false)
-    } catch (err) {
       setMessages(prev => [
         ...prev,
-        { role: 'user', content: userMessage },
-        { role: 'assistant', content: 'Sorry, something went wrong. Please try again!' }
+        { role: 'assistant', content: '✨ Recipe ready! AI image is being generated on the left... 👈' }
+      ])
+
+      setLoading(false)
+
+    } catch (err) {
+      console.error('❌ Error:', err)
+      setMessages(prev => [
+        ...prev,
+        { role: 'assistant', content: 'Sorry, something went wrong. Try again!' }
       ])
       setLoading(false)
-      console.error('Gemini Error:', err)
     }
   }
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    if (!input.trim()) return
+    if (!input.trim() || loading) return
     
-    generateRecipe(input)
+    const userMessage = input
     setInput('')
+    generateRecipe(userMessage)
   }
 
   return (
-    <div className="chat-container">
-      <h2 className="section-title">💬 Recipe Chatbot (Gemini AI)</h2>
+    <div className="chat-interface">
+      <div className="chat-header">
+        <h2>🍳 Recipe Chatbot</h2>
+      </div>
       
       <div className="messages-area">
         {messages.map((msg, index) => (
-          <div 
-            key={index} 
-            className={`message ${msg.role}`}
-          >
-            <div className="message-content">
+          <div key={index} className={`message ${msg.role}`}>
+            <div className="message-bubble">
               {msg.content}
             </div>
           </div>
@@ -121,8 +157,10 @@ function ChatInterface({ detectedIngredients, userName }) {
         
         {loading && (
           <div className="message assistant">
-            <div className="message-content typing-indicator">
-              <span></span><span></span><span></span>
+            <div className="typing-indicator">
+              <div className="typing-dot"></div>
+              <div className="typing-dot"></div>
+              <div className="typing-dot"></div>
             </div>
           </div>
         )}
@@ -130,21 +168,31 @@ function ChatInterface({ detectedIngredients, userName }) {
         <div ref={messagesEndRef} />
       </div>
 
-      <form onSubmit={handleSubmit} className="input-area">
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask for a recipe or describe ingredients..."
-          className="chat-input"
-          disabled={loading}
-        />
-        <button type="submit" disabled={loading} className="btn-send">
-          Send
-        </button>
-      </form>
+      {recipes.length > 0 && (
+        <div className="recipes-scroll">
+          {recipes.map((recipe, index) => (
+            <div key={index} ref={index === recipes.length - 1 ? recipeRef : null}>
+              <RecipeCard recipe={recipe} />
+            </div>
+          ))}
+        </div>
+      )}
 
-      {recipe && <RecipeCard recipe={recipe} />}
+      <div className="input-area">
+        <form onSubmit={handleSubmit} style={{ display: 'flex', width: '100%', gap: '10px' }}>
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Tell me your recipe... 🥘"
+            className="chat-input"
+            disabled={loading}
+          />
+          <button type="submit" disabled={loading} className="send-button">
+            {loading ? '⏳' : '➤'}
+          </button>
+        </form>
+      </div>
     </div>
   )
 }
