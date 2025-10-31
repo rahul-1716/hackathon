@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import GalaxyBackground from './components/GalaxyBackground'
 import ChatInterface from './components/ChatInterface'
 import './App.css'
 
@@ -175,31 +176,6 @@ function App() {
           </div>
         </div>
       </div>
-    </div>
-  )
-}
-
-function GalaxyBackground() {
-  useEffect(() => {
-    const starsContainer = document.querySelector('.stars')
-    if (starsContainer) {
-      for (let i = 0; i < 100; i++) {
-        const star = document.createElement('div')
-        star.className = 'star'
-        star.style.left = Math.random() * 100 + '%'
-        star.style.top = Math.random() * 100 + '%'
-        star.style.animationDelay = Math.random() * 3 + 's'
-        starsContainer.appendChild(star)
-      }
-    }
-  }, [])
-
-  return (
-    <div className="galaxy-background">
-      <div className="stars"></div>
-      <div className="nebula nebula-purple" style={{ top: '10%', left: '10%' }}></div>
-      <div className="nebula nebula-blue" style={{ bottom: '20%', right: '15%' }}></div>
-      <div className="nebula nebula-purple" style={{ bottom: '10%', left: '20%' }}></div>
     </div>
   )
 }

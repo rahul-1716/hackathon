@@ -93,7 +93,7 @@
 
 .nutrition-panel-title {
   font-size: 1.5rem;
-  color: #667eea;
+  color: #8d4cc2;
   margin-bottom: 25px;
   text-align: center;
   font-weight: 700;
@@ -161,7 +161,7 @@
 }
 
 .recipe-meta-info {
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(to left, #6f4a8e, #8d4cc2, #050505 );
   border-radius: 12px;
   padding: 20px;
   color: white;
