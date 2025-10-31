@@ -5,9 +5,8 @@ import './App.css'
 function App() {
   const [userName, setUserName] = useState('')
   const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [currentImage, setCurrentImage] = useState(null)
-  const [imageLoading, setImageLoading] = useState(false)
-  const [imageError, setImageError] = useState(null)
+  const [currentRecipeData, setCurrentRecipeData] = useState(null)
+  const [recipes, setRecipes] = useState([])
 
   useEffect(() => {
     const saved = localStorage.getItem('userName')
@@ -29,56 +28,12 @@ function App() {
     localStorage.removeItem('userName')
     setUserName('')
     setIsLoggedIn(false)
-    setCurrentImage(null)
+    setRecipes([])
+    setCurrentRecipeData(null)
   }
 
-  const handleRecipeGenerated = (recipeName) => {
-    setImageLoading(true)
-    setImageError(null)
-    generateRecipeImage(recipeName)
-  }
-
-  const generateRecipeImage = async (recipeName) => {
-    try {
-      console.log('🎨 Searching for recipe image:', recipeName)
-      
-      const query = `${recipeName} food photography delicious`
-      
-      const response = await fetch(
-        `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&count=1&client_id=tR5S07dh0sA8phwJ0PHDvAYvT0F_ibjEUjzlR1Jyw1c`
-      )
-
-      console.log('📡 Unsplash response status:', response.status)
-
-      if (!response.ok) {
-        throw new Error(`API Error: ${response.status}`)
-      }
-
-      const data = await response.json()
-      
-      console.log('📦 Data received')
-      
-      if (data.results && data.results.length > 0) {
-        const imageUrl = data.results[0].urls.regular
-        console.log('✅ Image found!')
-        setCurrentImage(imageUrl)
-        setImageError(null)
-        setImageLoading(false)
-      } else {
-        // Fallback to generic food image
-        const fallbackUrl = 'https://images.unsplash.com/photo-1495521821757-a1efb6729352?w=500&h=500&fit=crop'
-        console.log('⚠️ Using fallback image')
-        setCurrentImage(fallbackUrl)
-        setImageLoading(false)
-      }
-    } catch (err) {
-      console.error('❌ Error:', err)
-      // Use fallback image on error
-      const fallbackUrl = 'https://images.unsplash.com/photo-1495521821757-a1efb6729352?w=500&h=500&fit=crop'
-      setCurrentImage(fallbackUrl)
-      setImageError(null)
-      setImageLoading(false)
-    }
+  const handleRecipeGenerated = (recipeData) => {
+    setCurrentRecipeData(recipeData)
   }
 
   if (!isLoggedIn) {
@@ -92,7 +47,7 @@ function App() {
               <h1 className="login-title">AI Recipe Generator</h1>
               <p className="login-subtitle">Chef Powered by Gemini</p>
               <p className="login-description">
-                Generate amazing recipes with AI-created food images instantly!
+                Generate amazing recipes with complete nutrition info!
               </p>
               <div className="login-form">
                 <input
@@ -129,38 +84,94 @@ function App() {
         </div>
 
         <div className="app-content">
-          {/* LEFT PANEL - IMAGE */}
-          <div className="image-panel">
-            <div className="image-panel-content">
-              {imageLoading ? (
-                <div className="image-loading-state">
-                  <svg viewBox="0 0 50 50">
-                    <circle cx="25" cy="25" r="20" fill="none" stroke="#667eea" strokeWidth="2" strokeDasharray="31.4 125.6" />
-                  </svg>
-                  <p>🎨 Loading food image...</p>
+          {/* LEFT PANEL - NUTRITION INFO */}
+          <div className="nutrition-panel">
+            {currentRecipeData ? (
+              <div className="nutrition-panel-content">
+                <h3 className="nutrition-panel-title">📊 {currentRecipeData.name}</h3>
+                
+                <div className="nutrition-display">
+                  {currentRecipeData.nutrition.calories && (
+                    <div className="nutrition-card calories">
+                      <div className="nutrition-emoji">🔥</div>
+                      <div className="nutrition-card-label">Calories</div>
+                      <div className="nutrition-card-value">{currentRecipeData.nutrition.calories}</div>
+                    </div>
+                  )}
+                  
+                  {currentRecipeData.nutrition.protein && (
+                    <div className="nutrition-card protein">
+                      <div className="nutrition-emoji">💪</div>
+                      <div className="nutrition-card-label">Protein</div>
+                      <div className="nutrition-card-value">{currentRecipeData.nutrition.protein}g</div>
+                    </div>
+                  )}
+                  
+                  {currentRecipeData.nutrition.carbs && (
+                    <div className="nutrition-card carbs">
+                      <div className="nutrition-emoji">🌾</div>
+                      <div className="nutrition-card-label">Carbs</div>
+                      <div className="nutrition-card-value">{currentRecipeData.nutrition.carbs}g</div>
+                    </div>
+                  )}
+                  
+                  {currentRecipeData.nutrition.fat && (
+                    <div className="nutrition-card fat">
+                      <div className="nutrition-emoji">🧈</div>
+                      <div className="nutrition-card-label">Fat</div>
+                      <div className="nutrition-card-value">{currentRecipeData.nutrition.fat}g</div>
+                    </div>
+                  )}
+                  
+                  {currentRecipeData.nutrition.fiber && (
+                    <div className="nutrition-card fiber">
+                      <div className="nutrition-emoji">🌱</div>
+                      <div className="nutrition-card-label">Fiber</div>
+                      <div className="nutrition-card-value">{currentRecipeData.nutrition.fiber}g</div>
+                    </div>
+                  )}
                 </div>
-              ) : currentImage ? (
-                <img 
-                  src={currentImage} 
-                  alt="Recipe" 
-                  className="recipe-image-display"
-                  onError={() => {
-                    console.error('Image failed to load')
-                  }}
-                />
-              ) : (
-                <div className="image-loading-state">
-                  <p style={{ fontSize: '3rem', marginBottom: '10px' }}>🍽️</p>
-                  <p>Your recipe image will appear here</p>
-                  <p style={{ fontSize: '0.85rem', marginTop: '10px', color: '#999' }}>Ask for a recipe to get started →</p>
+
+                <div className="recipe-meta-info">
+                  {currentRecipeData.time && (
+                    <div className="meta-item">
+                      <span>⏱️ Time:</span> {currentRecipeData.time}
+                    </div>
+                  )}
+                  {currentRecipeData.servings && (
+                    <div className="meta-item">
+                      <span>🍽️ Servings:</span> {currentRecipeData.servings}
+                    </div>
+                  )}
+                  {currentRecipeData.difficulty && (
+                    <div className="meta-item">
+                      <span>💪 Difficulty:</span> {currentRecipeData.difficulty}
+                    </div>
+                  )}
+                  {currentRecipeData.dietary && (
+                    <div className="meta-item">
+                      <span>🌱 Diet:</span> {currentRecipeData.dietary}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+              </div>
+            ) : (
+              <div className="nutrition-panel-empty">
+                <p style={{ fontSize: '3rem', marginBottom: '10px' }}>📊</p>
+                <p>Nutrition info will appear here</p>
+                <p style={{ fontSize: '0.85rem', marginTop: '10px', color: '#999' }}>Ask for a recipe →</p>
+              </div>
+            )}
           </div>
 
           {/* RIGHT PANEL - CHAT */}
           <div className="chat-wrapper">
-            <ChatInterface userName={userName} onRecipeGenerated={handleRecipeGenerated} />
+            <ChatInterface 
+              userName={userName} 
+              recipes={recipes}
+              setRecipes={setRecipes}
+              onRecipeGenerated={handleRecipeGenerated}
+            />
           </div>
         </div>
       </div>

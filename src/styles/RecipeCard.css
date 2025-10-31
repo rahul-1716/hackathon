@@ -255,3 +255,61 @@
     font-size: 0.85rem;
   }
 }
+
+/* Nutrition Info Styles */
+.recipe-nutrition {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+  padding: 20px;
+  margin: 0;
+  border-bottom: 2px solid rgba(102, 126, 234, 0.2);
+}
+
+.nutrition-title {
+  font-size: 1.1rem;
+  color: #667eea;
+  margin-bottom: 15px;
+  font-weight: 700;
+}
+
+.nutrition-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 12px;
+}
+
+.nutrition-item {
+  background: white;
+  padding: 12px;
+  border-radius: 10px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+}
+
+.nutrition-label {
+  display: block;
+  font-size: 0.85rem;
+  color: #999;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.nutrition-value {
+  display: block;
+  font-size: 1.4rem;
+  color: #667eea;
+  font-weight: 700;
+}
+
+@media (max-width: 768px) {
+  .nutrition-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .nutrition-item {
+    padding: 10px;
+  }
+
+  .nutrition-value {
+    font-size: 1.2rem;
+  }
+}

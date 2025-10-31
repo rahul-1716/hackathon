@@ -4,8 +4,6 @@ import '../styles/RecipeCard.css'
 
 function RecipeCard({ recipe }) {
   const [recipeData, setRecipeData] = useState(null)
-  const [image, setImage] = useState(null)
-  const [imageLoading, setImageLoading] = useState(true)
 
   useEffect(() => {
     gsap.from('.recipe-card', {
@@ -15,9 +13,7 @@ function RecipeCard({ recipe }) {
       ease: 'back.out(1.2)'
     })
 
-    const data = parseRecipe(recipe)
-    setRecipeData(data)
-    generateImage(data.name)
+    setRecipeData(parseRecipe(recipe))
   }, [recipe])
 
   const parseRecipe = (text) => {
@@ -25,6 +21,13 @@ function RecipeCard({ recipe }) {
       name: 'Delicious Recipe',
       ingredients: [],
       instructions: [],
+      nutrition: {
+        calories: '',
+        protein: '',
+        carbs: '',
+        fat: '',
+        fiber: ''
+      },
       time: '',
       servings: '',
       dietary: '',
@@ -49,6 +52,10 @@ function RecipeCard({ recipe }) {
       } else if (trimmed.includes('Instruction') || trimmed.includes('Step')) {
         if (currentSection && tempContent.length > 0) assignSection(sections, currentSection, tempContent)
         currentSection = 'instructions'
+        tempContent = []
+      } else if (trimmed.includes('Nutrition') || trimmed.includes('Calorie')) {
+        if (currentSection && tempContent.length > 0) assignSection(sections, currentSection, tempContent)
+        currentSection = 'nutrition'
         tempContent = []
       } else if (trimmed.includes('Cooking Time')) {
         sections.time = trimmed.replace(/\*.*?:\s*/i, '').trim()
@@ -81,29 +88,25 @@ function RecipeCard({ recipe }) {
         .filter(line => line && /^\d/.test(line))
         .map(line => line.replace(/^\d+\.\s*/, '').trim())
         .filter(line => line.length > 0)
-    }
-  }
-
-  const generateImage = async (recipeName) => {
-    setImageLoading(true)
-    try {
-      const query = `${recipeName} food photography professional high quality`
-      const response = await fetch(
-        `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&count=1&client_id=tR5S07dh0sA8phwJ0PHDvAYvT0F_ibjEUjzlR1Jyw1c`
-      )
-
-      if (!response.ok) throw new Error('Failed to fetch image')
-
-      const data = await response.json()
-      
-      if (data.results && data.results.length > 0) {
-        setImage(data.results[0].urls.regular)
-      }
-
-      setImageLoading(false)
-    } catch (err) {
-      console.error('Image fetch error:', err)
-      setImageLoading(false)
+    } else if (section === 'nutrition') {
+      content.forEach(line => {
+        if (line.includes('Calorie')) {
+          const match = line.match(/(\d+)/)
+          if (match) sections.nutrition.calories = match[1]
+        } else if (line.includes('Protein')) {
+          const match = line.match(/(\d+)/)
+          if (match) sections.nutrition.protein = match[1]
+        } else if (line.includes('Carb')) {
+          const match = line.match(/(\d+)/)
+          if (match) sections.nutrition.carbs = match[1]
+        } else if (line.includes('Fat')) {
+          const match = line.match(/(\d+)/)
+          if (match) sections.nutrition.fat = match[1]
+        } else if (line.includes('Fiber')) {
+          const match = line.match(/(\d+)/)
+          if (match) sections.nutrition.fiber = match[1]
+        }
+      })
     }
   }
 
@@ -121,10 +124,44 @@ function RecipeCard({ recipe }) {
         </div>
       </div>
 
-      <div className="recipe-image-container">
-        {imageLoading && <div className="image-loading">🎨 Generating image...</div>}
-        {image && <img src={image} alt={recipeData.name} className="recipe-image" />}
-      </div>
+      {/* NUTRITION INFO */}
+      {(recipeData.nutrition.calories || recipeData.nutrition.protein) && (
+        <div className="recipe-nutrition">
+          <h4 className="nutrition-title">📊 Nutrition Facts</h4>
+          <div className="nutrition-grid">
+            {recipeData.nutrition.calories && (
+              <div className="nutrition-item">
+                <span className="nutrition-label">Calories</span>
+                <span className="nutrition-value">{recipeData.nutrition.calories}</span>
+              </div>
+            )}
+            {recipeData.nutrition.protein && (
+              <div className="nutrition-item">
+                <span className="nutrition-label">Protein</span>
+                <span className="nutrition-value">{recipeData.nutrition.protein}g</span>
+              </div>
+            )}
+            {recipeData.nutrition.carbs && (
+              <div className="nutrition-item">
+                <span className="nutrition-label">Carbs</span>
+                <span className="nutrition-value">{recipeData.nutrition.carbs}g</span>
+              </div>
+            )}
+            {recipeData.nutrition.fat && (
+              <div className="nutrition-item">
+                <span className="nutrition-label">Fat</span>
+                <span className="nutrition-value">{recipeData.nutrition.fat}g</span>
+              </div>
+            )}
+            {recipeData.nutrition.fiber && (
+              <div className="nutrition-item">
+                <span className="nutrition-label">Fiber</span>
+                <span className="nutrition-value">{recipeData.nutrition.fiber}g</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="recipe-body">
         {recipeData.ingredients.length > 0 && (
@@ -151,11 +188,11 @@ function RecipeCard({ recipe }) {
       </div>
 
       <div className="recipe-footer">
-        <button onClick={() => generateImage(recipeData.name)} className="recipe-btn">
-          🔄 Regenerate Image
-        </button>
-        <button onClick={() => navigator.clipboard.writeText(recipe)} className="recipe-btn secondary">
-          📋 Copy
+        <button 
+          onClick={() => navigator.clipboard.writeText(recipe)} 
+          className="recipe-btn"
+        >
+          📋 Copy Recipe
         </button>
       </div>
     </div>

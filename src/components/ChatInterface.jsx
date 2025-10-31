@@ -4,13 +4,12 @@ import gsap from 'gsap'
 import RecipeCard from './RecipeCard'
 import '../styles/ChatInterface.css'
 
-function ChatInterface({ userName, onRecipeGenerated }) {
+function ChatInterface({ userName, recipes, setRecipes, onRecipeGenerated }) {
   const [messages, setMessages] = useState([
-    { role: 'assistant', content: `Hi ${userName}! 👋 Welcome! Tell me what ingredients you have or what recipe you'd like, and I'll generate an amazing recipe with an AI-generated image!` }
+    { role: 'assistant', content: `Hi ${userName}! 👋 Welcome! Tell me what ingredients you have or what recipe you'd like, and I'll generate an amazing recipe with complete nutrition info!` }
   ])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
-  const [recipes, setRecipes] = useState([])
   const messagesEndRef = useRef(null)
   const recipeRef = useRef(null)
   const [chat, setChat] = useState(null)
@@ -23,7 +22,7 @@ function ChatInterface({ userName, onRecipeGenerated }) {
       const chatInstance = model.startChat({
         history: [],
         generationConfig: {
-          maxOutputTokens: 2000,
+          maxOutputTokens: 2500,
           temperature: 0.7,
         },
       })
@@ -57,6 +56,85 @@ function ChatInterface({ userName, onRecipeGenerated }) {
     }
   }, [recipes])
 
+  const parseRecipeData = (text) => {
+    const data = {
+      name: 'Delicious Recipe',
+      ingredients: [],
+      instructions: [],
+      nutrition: {
+        calories: '',
+        protein: '',
+        carbs: '',
+        fat: '',
+        fiber: ''
+      },
+      time: '',
+      servings: '',
+      dietary: '',
+      difficulty: ''
+    }
+
+    const lines = text.split('\n')
+    
+    // Extract name
+    const nameMatch = text.match(/\*\*Recipe Name\*\*\s*\n(.+)/i)
+    if (nameMatch) data.name = nameMatch[1].trim()
+
+    // Extract time
+    const timeMatch = text.match(/Cooking Time.*?:\s*(.+?)(?:\n|$)/i)
+    if (timeMatch) data.time = timeMatch[1].trim()
+
+    // Extract servings
+    const servingsMatch = text.match(/Servings.*?:\s*(.+?)(?:\n|$)/i)
+    if (servingsMatch) data.servings = servingsMatch[1].trim()
+
+    // Extract difficulty
+    const diffMatch = text.match(/Difficulty.*?:\s*(.+?)(?:\n|$)/i)
+    if (diffMatch) data.difficulty = diffMatch[1].trim()
+
+    // Extract dietary
+    const dietMatch = text.match(/Dietary.*?:\s*(.+?)(?:\n|$)/i)
+    if (dietMatch) data.dietary = dietMatch[1].trim()
+
+    // Extract nutrition
+    const calorieMatch = text.match(/Calorie[s]?.*?:\s*(\d+)/i)
+    if (calorieMatch) data.nutrition.calories = calorieMatch[1]
+
+    const proteinMatch = text.match(/Protein.*?:\s*(\d+)/i)
+    if (proteinMatch) data.nutrition.protein = proteinMatch[1]
+
+    const carbsMatch = text.match(/Carb[s]?.*?:\s*(\d+)/i)
+    if (carbsMatch) data.nutrition.carbs = carbsMatch[1]
+
+    const fatMatch = text.match(/Fat.*?:\s*(\d+)/i)
+    if (fatMatch) data.nutrition.fat = fatMatch[1]
+
+    const fiberMatch = text.match(/Fiber.*?:\s*(\d+)/i)
+    if (fiberMatch) data.nutrition.fiber = fiberMatch[1]
+
+    // Extract ingredients
+    const ingredientMatch = text.match(/Ingredients:([\s\S]*?)(?:Instructions:|$)/i)
+    if (ingredientMatch) {
+      const ingLines = ingredientMatch[1].split('\n')
+      data.ingredients = ingLines
+        .filter(line => line.match(/^[-•\*\s]+/))
+        .map(line => line.replace(/^[-•\*\s]+/, '').trim())
+        .filter(line => line.length > 0)
+    }
+
+    // Extract instructions
+    const instructMatch = text.match(/Instructions:([\s\S]*?)(?:Cooking|Nutrition|$)/i)
+    if (instructMatch) {
+      const instLines = instructMatch[1].split('\n')
+      data.instructions = instLines
+        .filter(line => /^\d+\./.test(line.trim()))
+        .map(line => line.replace(/^\d+\.\s*/, '').trim())
+        .filter(line => line.length > 0)
+    }
+
+    return data
+  }
+
   const generateRecipe = async (userMessage) => {
     if (!chat) {
       alert('Chat not initialized. Please wait...')
@@ -71,7 +149,7 @@ function ChatInterface({ userName, onRecipeGenerated }) {
     setLoading(true)
     
     try {
-      const recipePrompt = `You are a professional chef. The user says: "${userMessage}"
+      const recipePrompt = `You are a professional chef and nutritionist. The user says: "${userMessage}"
 
 Generate ONE complete recipe with these EXACT sections:
 
@@ -93,30 +171,33 @@ Generate ONE complete recipe with these EXACT sections:
 4. [Step 4 detailed]
 5. [Step 5 detailed]
 
+**Nutrition Facts (per serving):**
+- Calories: [number]
+- Protein: [grams]g
+- Carbs: [grams]g
+- Fat: [grams]g
+- Fiber: [grams]g
+
 **Cooking Time:** [X minutes]
 **Servings:** [X servings]
 **Dietary Info:** [vegan/vegetarian/gluten-free/None]
 **Difficulty:** [Easy/Medium/Hard]
 
-Generate the complete recipe NOW.`
+Generate the complete recipe NOW with accurate nutrition info.`
 
       const result = await chat.sendMessage(recipePrompt)
       const aiResponse = result.response.text()
       
       console.log('✅ Recipe generated!')
 
-      // Extract recipe name
-      const nameMatch = aiResponse.match(/\*\*Recipe Name\*\*\s*\n(.+)/i)
-      const recipeName = nameMatch ? nameMatch[1].trim() : 'Delicious Recipe'
-
-      // Trigger AI image generation in parent component
-      onRecipeGenerated(recipeName)
+      const recipeData = parseRecipeData(aiResponse)
+      onRecipeGenerated(recipeData)
 
       setRecipes(prev => [...prev, aiResponse])
       
       setMessages(prev => [
         ...prev,
-        { role: 'assistant', content: '✨ Recipe ready! AI image is being generated on the left... 👈' }
+        { role: 'assistant', content: '✨ Recipe ready! Check the nutrition info on the left 👈' }
       ])
 
       setLoading(false)
