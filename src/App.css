@@ -75,7 +75,8 @@
 }
 
 .nutrition-panel {
-  background: rgba(255, 255, 255, 0.98);
+  
+  background: radial-gradient(ellipse at center, #926eb0, #ae89cc,#040305);
   border-radius: 20px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   overflow-y: auto;
@@ -93,7 +94,7 @@
 
 .nutrition-panel-title {
   font-size: 1.5rem;
-  color: #8d4cc2;
+  color: whiten;
   margin-bottom: 25px;
   text-align: center;
   font-weight: 700;
