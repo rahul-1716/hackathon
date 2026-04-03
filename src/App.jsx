@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import ChatInterface from './components/ChatInterface'
+import GalaxyBg from './components/GalaxyBg'
 import './App.css'
 
 function App() {
@@ -39,7 +40,7 @@ function App() {
   if (!isLoggedIn) {
     return (
       <div className="app">
-        <GalaxyBackground />
+        <GalaxyBg />
         <div className="app-login">
           <div className="login-container">
             <form onSubmit={handleLogin} className="login-card">
@@ -71,7 +72,7 @@ function App() {
 
   return (
     <div className="app">
-      <GalaxyBackground />
+      <GalaxyBg />
       <div className="app-main">
         <div className="app-header">
           <div className="app-title">🍳 AI Recipe Generator</div>
@@ -175,31 +176,6 @@ function App() {
           </div>
         </div>
       </div>
-    </div>
-  )
-}
-
-function GalaxyBackground() {
-  useEffect(() => {
-    const starsContainer = document.querySelector('.stars')
-    if (starsContainer) {
-      for (let i = 0; i < 100; i++) {
-        const star = document.createElement('div')
-        star.className = 'star'
-        star.style.left = Math.random() * 100 + '%'
-        star.style.top = Math.random() * 100 + '%'
-        star.style.animationDelay = Math.random() * 3 + 's'
-        starsContainer.appendChild(star)
-      }
-    }
-  }, [])
-
-  return (
-    <div className="galaxy-background">
-      <div className="stars"></div>
-      <div className="nebula nebula-purple" style={{ top: '10%', left: '10%' }}></div>
-      <div className="nebula nebula-blue" style={{ bottom: '20%', right: '15%' }}></div>
-      <div className="nebula nebula-purple" style={{ bottom: '10%', left: '20%' }}></div>
     </div>
   )
 }

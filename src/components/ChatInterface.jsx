@@ -74,29 +74,21 @@ function ChatInterface({ userName, recipes, setRecipes, onRecipeGenerated }) {
       difficulty: ''
     }
 
-    const lines = text.split('\n')
-    
-    // Extract name
     const nameMatch = text.match(/\*\*Recipe Name\*\*\s*\n(.+)/i)
     if (nameMatch) data.name = nameMatch[1].trim()
 
-    // Extract time
     const timeMatch = text.match(/Cooking Time.*?:\s*(.+?)(?:\n|$)/i)
     if (timeMatch) data.time = timeMatch[1].trim()
 
-    // Extract servings
     const servingsMatch = text.match(/Servings.*?:\s*(.+?)(?:\n|$)/i)
     if (servingsMatch) data.servings = servingsMatch[1].trim()
 
-    // Extract difficulty
     const diffMatch = text.match(/Difficulty.*?:\s*(.+?)(?:\n|$)/i)
     if (diffMatch) data.difficulty = diffMatch[1].trim()
 
-    // Extract dietary
     const dietMatch = text.match(/Dietary.*?:\s*(.+?)(?:\n|$)/i)
     if (dietMatch) data.dietary = dietMatch[1].trim()
 
-    // Extract nutrition
     const calorieMatch = text.match(/Calorie[s]?.*?:\s*(\d+)/i)
     if (calorieMatch) data.nutrition.calories = calorieMatch[1]
 
@@ -112,7 +104,6 @@ function ChatInterface({ userName, recipes, setRecipes, onRecipeGenerated }) {
     const fiberMatch = text.match(/Fiber.*?:\s*(\d+)/i)
     if (fiberMatch) data.nutrition.fiber = fiberMatch[1]
 
-    // Extract ingredients
     const ingredientMatch = text.match(/Ingredients:([\s\S]*?)(?:Instructions:|$)/i)
     if (ingredientMatch) {
       const ingLines = ingredientMatch[1].split('\n')
@@ -122,7 +113,6 @@ function ChatInterface({ userName, recipes, setRecipes, onRecipeGenerated }) {
         .filter(line => line.length > 0)
     }
 
-    // Extract instructions
     const instructMatch = text.match(/Instructions:([\s\S]*?)(?:Cooking|Nutrition|$)/i)
     if (instructMatch) {
       const instLines = instructMatch[1].split('\n')

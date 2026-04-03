@@ -49,54 +49,6 @@
   background: rgba(76, 175, 80, 0.9);
 }
 
-.recipe-image-container {
-  position: relative;
-  width: 100%;
-  height: 220px;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  overflow: hidden;
-}
-
-.recipe-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  animation: imageLoad 0.5s ease;
-}
-
-@keyframes imageLoad {
-  from {
-    opacity: 0;
-    transform: scale(1.05);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.image-loading {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-.image-error {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 0.95rem;
-  background: rgba(255, 69, 87, 0.7);
-}
-
 .recipe-body {
   padding: 20px;
   max-height: 280px;
@@ -189,13 +141,13 @@
 .recipe-footer {
   padding: 15px 20px;
   background: #f9f9f9;
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 10px;
   border-top: 1px solid rgba(102, 126, 234, 0.1);
 }
 
 .recipe-btn {
-  flex: 1;
   padding: 10px;
   border: none;
   border-radius: 8px;
@@ -233,10 +185,6 @@
     padding: 5px 10px;
   }
 
-  .recipe-image-container {
-    height: 180px;
-  }
-
   .recipe-body {
     max-height: 200px;
     padding: 15px;
@@ -247,7 +195,7 @@
   }
 
   .recipe-footer {
-    flex-direction: column;
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .recipe-btn {
@@ -256,60 +204,12 @@
   }
 }
 
-/* Nutrition Info Styles */
-.recipe-nutrition {
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
-  padding: 20px;
-  margin: 0;
-  border-bottom: 2px solid rgba(102, 126, 234, 0.2);
-}
-
-.nutrition-title {
-  font-size: 1.1rem;
-  color: #667eea;
-  margin-bottom: 15px;
-  font-weight: 700;
-}
-
-.nutrition-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-  gap: 12px;
-}
-
-.nutrition-item {
-  background: white;
-  padding: 12px;
-  border-radius: 10px;
-  text-align: center;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
-}
-
-.nutrition-label {
-  display: block;
-  font-size: 0.85rem;
-  color: #999;
-  margin-bottom: 6px;
-  font-weight: 600;
-}
-
-.nutrition-value {
-  display: block;
-  font-size: 1.4rem;
-  color: #667eea;
-  font-weight: 700;
-}
-
-@media (max-width: 768px) {
-  .nutrition-grid {
-    grid-template-columns: repeat(2, 1fr);
+@media (max-width: 480px) {
+  .recipe-footer {
+    grid-template-columns: 1fr;
   }
 
-  .nutrition-item {
+  .recipe-btn {
     padding: 10px;
-  }
-
-  .nutrition-value {
-    font-size: 1.2rem;
   }
 }

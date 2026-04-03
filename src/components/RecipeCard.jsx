@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { jsPDF } from 'jspdf'
 import gsap from 'gsap'
 import '../styles/RecipeCard.css'
 
@@ -110,6 +111,169 @@ function RecipeCard({ recipe }) {
     }
   }
 
+  const exportPDF = () => {
+    try {
+      const doc = new jsPDF()
+      const pageWidth = doc.internal.pageSize.getWidth()
+      const pageHeight = doc.internal.pageSize.getHeight()
+      let yPosition = 15
+
+      // Title
+      doc.setFontSize(20)
+      doc.setFont(undefined, 'bold')
+      doc.text(recipeData.name, pageWidth / 2, yPosition, { align: 'center' })
+      yPosition += 15
+
+      // Recipe Info
+      doc.setFontSize(10)
+      doc.setFont(undefined, 'normal')
+      const infoText = [
+        `⏱️ Time: ${recipeData.time}`,
+        `🍽️ Servings: ${recipeData.servings}`,
+        `💪 Difficulty: ${recipeData.difficulty}`,
+        `🌱 Diet: ${recipeData.dietary}`
+      ].join(' | ')
+      doc.text(infoText, pageWidth / 2, yPosition, { align: 'center' })
+      yPosition += 12
+
+      // Nutrition Facts
+      if (recipeData.nutrition.calories) {
+        doc.setFont(undefined, 'bold')
+        doc.setFontSize(12)
+        doc.text('📊 Nutrition Facts (per serving)', 15, yPosition)
+        yPosition += 10
+
+        doc.setFont(undefined, 'normal')
+        doc.setFontSize(10)
+        const nutritionText = [
+          `Calories: ${recipeData.nutrition.calories}`,
+          `Protein: ${recipeData.nutrition.protein}g`,
+          `Carbs: ${recipeData.nutrition.carbs}g`,
+          `Fat: ${recipeData.nutrition.fat}g`,
+          `Fiber: ${recipeData.nutrition.fiber}g`
+        ]
+        nutritionText.forEach(text => {
+          doc.text(text, 20, yPosition)
+          yPosition += 7
+        })
+        yPosition += 5
+      }
+
+      // Ingredients
+      if (recipeData.ingredients.length > 0) {
+        doc.setFont(undefined, 'bold')
+        doc.setFontSize(12)
+        doc.text('🥘 Ingredients', 15, yPosition)
+        yPosition += 10
+
+        doc.setFont(undefined, 'normal')
+        doc.setFontSize(10)
+        recipeData.ingredients.forEach(ingredient => {
+          const splitText = doc.splitTextToSize(ingredient, pageWidth - 30)
+          splitText.forEach(line => {
+            doc.text(`• ${line}`, 20, yPosition)
+            yPosition += 6
+          })
+        })
+        yPosition += 5
+      }
+
+      // Check if we need a new page
+      if (yPosition > pageHeight - 50) {
+        doc.addPage()
+        yPosition = 15
+      }
+
+      // Instructions
+      if (recipeData.instructions.length > 0) {
+        doc.setFont(undefined, 'bold')
+        doc.setFontSize(12)
+        doc.text('👨‍🍳 Instructions', 15, yPosition)
+        yPosition += 10
+
+        doc.setFont(undefined, 'normal')
+        doc.setFontSize(10)
+        recipeData.instructions.forEach((instruction, index) => {
+          const splitText = doc.splitTextToSize(instruction, pageWidth - 30)
+          doc.setFont(undefined, 'bold')
+          doc.text(`${index + 1}.`, 20, yPosition)
+          doc.setFont(undefined, 'normal')
+          
+          let firstLine = true
+          splitText.forEach(line => {
+            doc.text(line, firstLine ? 28 : 20, yPosition)
+            yPosition += 6
+            firstLine = false
+          })
+          yPosition += 3
+        })
+      }
+
+      // Footer
+      doc.setFont(undefined, 'normal')
+      doc.setFontSize(8)
+      doc.text('Generated with AI Recipe Generator 🍳', pageWidth / 2, pageHeight - 10, { align: 'center' })
+
+      // Save PDF
+      doc.save(`${recipeData.name}.pdf`)
+      alert(`✅ ${recipeData.name}.pdf downloaded!`)
+    } catch (error) {
+      console.error('PDF generation error:', error)
+      alert('❌ Error generating PDF')
+    }
+  }
+
+  const printRecipe = () => {
+    const printWindow = window.open('', '', 'width=800,height=600')
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>${recipeData.name}</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            h1 { color: #667eea; }
+            h2 { color: #764ba2; margin-top: 20px; }
+            ul, ol { line-height: 1.8; }
+          </style>
+        </head>
+        <body>
+          <h1>${recipeData.name}</h1>
+          <p><strong>⏱️ Time:</strong> ${recipeData.time} | <strong>🍽️ Servings:</strong> ${recipeData.servings}</p>
+          <h2>🥘 Ingredients</h2>
+          <ul>
+            ${recipeData.ingredients.map(ing => `<li>${ing}</li>`).join('')}
+          </ul>
+          <h2>👨‍🍳 Instructions</h2>
+          <ol>
+            ${recipeData.instructions.map(inst => `<li>${inst}</li>`).join('')}
+          </ol>
+          <h2>📊 Nutrition</h2>
+          <p>Calories: ${recipeData.nutrition.calories} | Protein: ${recipeData.nutrition.protein}g</p>
+        </body>
+      </html>
+    `)
+    printWindow.document.close()
+    printWindow.print()
+  }
+
+  const shareRecipe = async () => {
+    const text = `🍳 Check out this recipe: ${recipeData.name}!\n\nCalories: ${recipeData.nutrition.calories}\nProtein: ${recipeData.nutrition.protein}g\n\nGenerated with AI Recipe Generator`
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: recipeData.name,
+          text: text
+        })
+      } catch (err) {
+        console.log('Share cancelled')
+      }
+    } else {
+      navigator.clipboard.writeText(text)
+      alert('📋 Recipe copied to clipboard!')
+    }
+  }
+
   if (!recipeData) return null
 
   return (
@@ -123,45 +287,6 @@ function RecipeCard({ recipe }) {
           {recipeData.dietary && <span className="badge dietary">🌱 {recipeData.dietary}</span>}
         </div>
       </div>
-
-      {/* NUTRITION INFO */}
-      {(recipeData.nutrition.calories || recipeData.nutrition.protein) && (
-        <div className="recipe-nutrition">
-          <h4 className="nutrition-title">📊 Nutrition Facts</h4>
-          <div className="nutrition-grid">
-            {recipeData.nutrition.calories && (
-              <div className="nutrition-item">
-                <span className="nutrition-label">Calories</span>
-                <span className="nutrition-value">{recipeData.nutrition.calories}</span>
-              </div>
-            )}
-            {recipeData.nutrition.protein && (
-              <div className="nutrition-item">
-                <span className="nutrition-label">Protein</span>
-                <span className="nutrition-value">{recipeData.nutrition.protein}g</span>
-              </div>
-            )}
-            {recipeData.nutrition.carbs && (
-              <div className="nutrition-item">
-                <span className="nutrition-label">Carbs</span>
-                <span className="nutrition-value">{recipeData.nutrition.carbs}g</span>
-              </div>
-            )}
-            {recipeData.nutrition.fat && (
-              <div className="nutrition-item">
-                <span className="nutrition-label">Fat</span>
-                <span className="nutrition-value">{recipeData.nutrition.fat}g</span>
-              </div>
-            )}
-            {recipeData.nutrition.fiber && (
-              <div className="nutrition-item">
-                <span className="nutrition-label">Fiber</span>
-                <span className="nutrition-value">{recipeData.nutrition.fiber}g</span>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
       <div className="recipe-body">
         {recipeData.ingredients.length > 0 && (
@@ -189,10 +314,35 @@ function RecipeCard({ recipe }) {
 
       <div className="recipe-footer">
         <button 
-          onClick={() => navigator.clipboard.writeText(recipe)} 
+          onClick={exportPDF}
           className="recipe-btn"
+          title="Download recipe as PDF"
         >
-          📋 Copy Recipe
+          📥 PDF
+        </button>
+
+        <button 
+          onClick={printRecipe}
+          className="recipe-btn"
+          title="Print recipe"
+        >
+          🖨️ Print
+        </button>
+
+        <button 
+          onClick={shareRecipe}
+          className="recipe-btn secondary"
+          title="Share recipe"
+        >
+          🔗 Share
+        </button>
+
+        <button 
+          onClick={() => navigator.clipboard.writeText(recipe)}
+          className="recipe-btn secondary"
+          title="Copy to clipboard"
+        >
+          📋 Copy
         </button>
       </div>
     </div>
