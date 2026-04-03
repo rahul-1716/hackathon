@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { jsPDF } from 'jspdf'
+import { jsPDF } from 'jspdf'
 import gsap from 'gsap'
 import '../styles/RecipeCard.css'
 
@@ -341,7 +342,25 @@ function RecipeCard({ recipe }) {
           onClick={() => navigator.clipboard.writeText(recipe)}
           className="recipe-btn secondary"
           title="Copy to clipboard"
+          title="Print recipe"
         >
+          🖨️ Print
+        </button>
+
+        <button 
+          onClick={shareRecipe}
+          className="recipe-btn secondary"
+          title="Share recipe"
+        >
+          🔗 Share
+        </button>
+
+        <button 
+          onClick={() => navigator.clipboard.writeText(recipe)}
+          className="recipe-btn secondary"
+          title="Copy to clipboard"
+        >
+          📋 Copy
           📋 Copy
         </button>
       </div>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import GalaxyBackground from './components/GalaxyBackground'
 import ChatInterface from './components/ChatInterface'
 import GalaxyBg from './components/GalaxyBg'
 import './App.css'
